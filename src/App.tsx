@@ -15,7 +15,7 @@ function App() {
         <input 
           type="file" 
           name="file" 
-          accept='image/svg' 
+          accept='image/svg+xml' //allow only svg files, to allow all image files change to 'image/*'
           className='input-field' 
           hidden
           onChange={({ target: {files}}) => {
