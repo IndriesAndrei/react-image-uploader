@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import './App.css'
 import { MdCloudUpload, MdDelete } from 'react-icons/md';
 import { AiFillFileImage } from 'react-icons/ai';
+import SVG from './SVG';
 
 function App() {
   const [image, setImage] = useState(null);
@@ -27,7 +28,7 @@ function App() {
         />
        
         {image ? 
-          <img src={image} width={150} height={150} alt={fileName} />
+          <object data={image} width={150} height={150} name={fileName} />
           :
           <>
             <MdCloudUpload color="#md1475cf" size={60} />
@@ -47,7 +48,7 @@ function App() {
           />
         </span>
       </section>
-      {/* <SVG /> */}
+      <SVG />
     </>
   )
 }

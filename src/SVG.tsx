@@ -11,7 +11,7 @@ function SVG() {
                 style={{ width: "200px", color: 'red', filter: 'invert' }}
             />
             <br />
-            <CustomSvg fill="pink" />
+            <CustomSvg fill="green" />
         </>
     )
 }
