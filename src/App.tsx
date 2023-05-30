@@ -1,12 +1,32 @@
-import { useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { MdCloudUpload, MdDelete } from 'react-icons/md';
 import { AiFillFileImage } from 'react-icons/ai';
-import SVG from './SVG';
+// import SVG from './SVG';
 
 function App() {
   const [image, setImage] = useState(null);
   const [fileName, setFileName] = useState("No selected file")
+  const [string, setString] = useState('')
+  const svg = document.getElementById('svgId');
+
+  const handleChange = () => {
+    // Gets the svg as a string
+    const svgText = svg ? svg.innerHTML : '';
+  
+    // Create the JSON string
+    const jsonString = JSON.stringify(svgText);
+    setString(jsonString)
+  }
+
+  useEffect(() => {
+    const svgImage = document.querySelector('.svg-image');
+    if (svgImage) {
+      console.log('Image', svgImage)
+      const animations = document.getAnimations()
+      console.log('Animations', animations)
+    }
+  }, [image])
 
   return (
     <>
@@ -28,10 +48,15 @@ function App() {
         />
        
         {image ? 
-          <object data={image} width={150} height={150} name={fileName} />
+          <>
+            <object data={image} width={150} height={150} name={fileName} className='svg-image' id='svgId' />
+            <textarea value={string} rows={4} cols={50} onChange={handleChange}>{string}</textarea>
+          </>
           :
           <>
-            <MdCloudUpload color="#md1475cf" size={60} />
+            <p>
+              <MdCloudUpload color="#md1475cf" size={60} />
+            </p>
             <p>Browse Files to upload</p>
           </>
         }
@@ -48,7 +73,7 @@ function App() {
           />
         </span>
       </section>
-      <SVG />
+      {/* <SVG /> */}
     </>
   )
 }
