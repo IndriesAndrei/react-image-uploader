@@ -2,38 +2,34 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { MdCloudUpload, MdDelete } from 'react-icons/md';
 import { AiFillFileImage } from 'react-icons/ai';
+import React from 'react';
 // import SVG from './SVG';
 
 function App() {
-  const [image, setImage] = useState(null);
-  const [fileName, setFileName] = useState("No selected file")
-  const [string, setString] = useState('')
-  const svg = document.getElementById('svgId');
-
-  const handleChange = () => {
-    // Gets the svg as a string
-    const svgText = svg ? svg.innerHTML : '';
-  
-    // Create the JSON string
-    const jsonString = JSON.stringify(svgText);
-    setString(jsonString)
-  }
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const objectRef = React.useRef<HTMLObjectElement | null>(null);
+  const [image, setImage] = useState<string>('');
+  const [fileName, setFileName] = useState("No selected file");
+  const [svg, setSVG] = React.useState<SVGSVGElement | null>();
+  const svgJSON = JSON.stringify(svg?.outerHTML);
 
   useEffect(() => {
     const svgImage = document.querySelector('.svg-image');
-    if (svgImage) {
-      console.log('Image', svgImage)
-      const animations = document.getAnimations()
-      console.log('Animations', animations)
+    if (svg) {
+      console.log('Image', svgImage) 
+      const animations = svg.getAnimations({subtree:true})
+      window['aaa'] = animations;
+      console.log('Animations', animations, JSON.parse(JSON.stringify(animations)))
     }
-  }, [image])
+  }, [svg])
 
-  return (
+   return (
     <>
       <h1>SVG Demo</h1>
       <br />
-      <form onClick={() => document.querySelector(".input-field").click()}>
+      <form onClick={() => inputRef.current?.click()}>
         <input 
+          ref={inputRef}
           type="file" 
           name="file" 
           accept='image/svg+xml' //allow only svg files, to allow all image files change to 'image/*'
@@ -49,8 +45,19 @@ function App() {
        
         {image ? 
           <>
-            <object data={image} width={150} height={150} name={fileName} className='svg-image' id='svgId' />
-            <textarea value={string} rows={4} cols={50} onChange={handleChange}>{string}</textarea>
+            <object
+              ref={objectRef}
+              data={image}
+              width={150}
+              height={150}
+              name={fileName}
+              className='svg-image'
+              id='svgId'
+              onLoad={() => {
+                const svg = objectRef.current?.contentDocument?.querySelector('svg');
+                setSVG(svg);
+              }}
+            />
           </>
           :
           <>
@@ -61,6 +68,15 @@ function App() {
           </>
         }
       </form>
+      {image && (
+        <textarea
+          value={svgJSON || 'empty'}
+          rows={15}
+          cols={50}
+          onChange={() => {console.log('onchange was triggered');}}
+          className='svg-textarea'
+        />
+      )}
       <section className='uploaded-row'>
         <AiFillFileImage color='#1475cf' />
         <span className='upload-content'>
@@ -68,7 +84,7 @@ function App() {
           <MdDelete 
             onClick={() =>{
               setFileName("No Selected File")
-              setImage(null)
+              setImage('')
             }}
           />
         </span>
