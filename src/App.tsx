@@ -22,7 +22,7 @@ function App() {
   useEffect(() => {
     const svgImage = document.querySelector('.svg-image');
     if (svgImage) {
-      const svgElement = svgImage.contentDocument?.querySelector('svg');
+      const svgElement = objectRef.current?.contentDocument?.querySelector('svg');
       if (svgElement) {
         const animations = getAnimationsFromSVG(svgElement);
         setSvgAnimations(animations);
@@ -98,6 +98,16 @@ function App() {
     return doc.querySelector('svg');
   };
 
+  const traverse = (node: any, svgAnimations: any[]) => {
+    if (node.type === 'element' && (node.tagName === 'animate' || node.tagName === 'animateTransform')) {
+      svgAnimations.push(node);
+    }
+  
+    if (node.children && node.children.length > 0) {
+      node.children.forEach((child: any) => traverse(child, svgAnimations));
+    }
+  };
+  
   const handleUpload = () => {
     console.log('handleUpload called');
     if (JsonFile) {
@@ -133,16 +143,6 @@ function App() {
       };
   
       reader.readAsText(JsonFile);
-    }
-  };
-
-  const traverse = (node: any, svgAnimations: any[]) => {
-    if (node.type === 'element' && (node.tagName === 'animate' || node.tagName === 'animateTransform')) {
-      svgAnimations.push(node);
-    }
-  
-    if (node.children && node.children.length > 0) {
-      node.children.forEach((child: any) => traverse(child, svgAnimations));
     }
   };
 
