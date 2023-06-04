@@ -71,7 +71,7 @@ function App() {
     const blob = new Blob([json], { type: "application/json" });
     const href = URL.createObjectURL(blob);
 
-    // create "a" HTLM element with href to file
+    // create "a" HTML element with href to file
     const link = document.createElement("a");
     link.href = href;
     link.download = fileName + ".json";
@@ -107,6 +107,29 @@ function App() {
       node.children.forEach((child: any) => traverse(child, svgAnimations));
     }
   };
+
+  const createAnimatedSVG = () => {
+    if (!svg || !svgAnimations.length) {
+      return;
+    }
+  
+    const newSvg = svg.cloneNode(true) as SVGSVGElement;
+  
+    svgAnimations.forEach((animation) => {
+      const targetElement = newSvg.querySelector(animation.selector);
+      if (targetElement) {
+        const animateElement = document.createElementNS('http://www.w3.org/2000/svg', animation.tagName);
+  
+        Object.entries(animation.attributes).forEach(([key, value]) => {
+          animateElement.setAttribute(key, value);
+        });
+  
+        targetElement.appendChild(animateElement);
+      }
+    });
+  
+    objectRef.current?.contentDocument?.querySelector('svg')?.replaceWith(newSvg);
+  };
   
   const handleUpload = () => {
     console.log('handleUpload called');
@@ -129,6 +152,7 @@ function App() {
               console.log('SVG Animations:', svgAnimations);
         
               setSvgAnimations(svgAnimations);
+              createAnimatedSVG();
             } else {
               console.log('No <svg> element found in the SVG file');
             }
