@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { MdCloudUpload, MdDelete } from 'react-icons/md';
 import { AiFillFileImage } from 'react-icons/ai';
-import { xml2js } from 'xml-js';
-// import SVG from './SVG';
+import { parse } from 'svg-parser';
 
 function App() {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
@@ -17,8 +16,6 @@ function App() {
   const [svg, setSVG] = React.useState<SVGSVGElement | null>();
   const [svgAnimations, setSvgAnimations] = useState<any[]>([]);
   const svgJSON = JSON.stringify(svg?.outerHTML);
-  const animations = svg?.getAnimations({subtree:true});
-  const animationsParsed = JSON.parse(JSON.stringify(animations));
 
   const MAX_PREVIEW_LENGTH = 200;
 
@@ -26,8 +23,13 @@ function App() {
     const svgImage = document.querySelector('.svg-image');
     if (svg) {
       console.log('Image', svgImage) 
+      const animations = svg.getAnimations({ subtree: true });
+      // const animationsParsed = JSON.parse(JSON.stringify(animations));
       window['aaa'] = animations;
       console.log('Animations', animations, JSON.parse(JSON.stringify(animations)))
+      const animationsArray = Array.from(animations);
+      setSvgAnimations(animationsArray);
+
     }
   }, [svg])
 
@@ -57,22 +59,45 @@ function App() {
       // }
   }
 
+  const parseSvg = (svgString: any) => {
+    if (!svgString) {
+      return null;
+    }
+  
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    return doc.querySelector('svg');
+  };
+
   const handleUpload = () => {
+    console.log('handleUpload called');
     if (JsonFile) {
       const reader = new FileReader();
      
       reader.onload = (e) => {
+        console.log('reader.onload called');
         if (e.target && e.target.result) {
-          const fileContent = reader.result as string;
-          const jsonData = JSON.parse(fileContent);
-         
-          setJsonData(jsonData);
+          // const fileContent = reader.result as string;
+          const fileContent = e.target.result as string;
+          // Parse SVG file using svg-parser
+          const parsedSvg = parseSvg(fileContent);
           
-          // Extract animations from the SVG
-          const svgAnimations: any[] = [];
-          traverse(jsonData, svgAnimations);
-
-          setSvgAnimations(svgAnimations);
+          if (parsedSvg) {
+            // Extract animations from the SVG
+            const svgAnimations: any[] = [];
+            console.log('Parsed SVG:', parsedSvg);
+            traverse(parsedSvg, svgAnimations);
+            console.log('SVG Animations:', svgAnimations);
+      
+            setSvgAnimations(svgAnimations);
+          } else {
+            console.log('Invalid SVG file');
+          }
+      
+          // Parse JSON data
+          const jsonContent = e.target.result as string;
+          const parsedJsonData = JSON.parse(jsonContent);
+          setJsonData(parsedJsonData);
         }
       };
 
@@ -80,17 +105,13 @@ function App() {
     }
   }
 
-  const traverse = (element: any, svgAnimations: any[]) => {
-    if (Array.isArray(element)) {
-      element.forEach((child) => traverse(child, svgAnimations));
-    } else if (typeof element === 'object' && element !== null) {
-      if (element.name === 'animate' || element.name === 'animateTransform') {
-        svgAnimations.push(element);
-      }
+  const traverse = (node: any, svgAnimations: any[]) => {
+    if (node.type === 'element' && (node.tagName === 'animate' || node.tagName === 'animateTransform')) {
+      svgAnimations.push(node);
+    }
   
-      if (element.elements) {
-        traverse(element.elements, svgAnimations);
-      }
+    if (node.children) {
+      node.children.forEach((child: any) => traverse(child, svgAnimations));
     }
   };
 
@@ -125,8 +146,16 @@ function App() {
               className='svg-image'
               id='svgId'
               onLoad={() => {
-                const svg = objectRef.current?.contentDocument?.querySelector('svg');
-                setSVG(svg);
+                setTimeout(() => {
+                  const svgImage = objectRef.current?.contentDocument?.querySelector('svg');
+                  if (svgImage) {
+                    setSVG(svgImage);
+                    const parsedSvg = parse(svgImage.outerHTML);
+                    const svgAnimations: any[] = [];
+                    traverse(parsedSvg, svgAnimations);
+                    setSvgAnimations(svgAnimations);
+                  }
+                }, 100)
               }}
             />
           </>
@@ -142,14 +171,13 @@ function App() {
       {image && (
         <>
           <textarea
-            value={animationsParsed || 'empty'}
+            value={svgJSON || 'empty'}
             rows={15}
             cols={50}
             onChange={() => {console.log('onchange was triggered');}}
             className='svg-textarea'
             ref={textareaRef}
           />
-          {/* <pre>{JSON.stringify(svgAnimations, null, 2)}</pre> */}
           <br />
           <button 
             className='download-button'
@@ -184,11 +212,24 @@ function App() {
         {jsonData && (
           <>
             <h3>Preview of the JSON file</h3>
-            <div style={{ paddingBottom: '10px' }}>{JSON.stringify(jsonData, null, 2).substring(0, MAX_PREVIEW_LENGTH)}...</div>
-            
+            <div style={{ paddingBottom: '10px' }}>  
+              {JSON.stringify(jsonData, null, 2).substring(0, MAX_PREVIEW_LENGTH)}
+              {jsonData.length > MAX_PREVIEW_LENGTH && '...'}
+            </div>
           </>
         )}
       </section>
+
+      {svgAnimations.length > 0 && (
+        <section>
+          <h3>SVG Animations</h3>
+          <ul>
+            {svgAnimations.map((animation, index) => (
+              <li key={index}>{JSON.stringify(animation)}</li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   )
 }
