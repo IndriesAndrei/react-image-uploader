@@ -21,17 +21,48 @@ function App() {
 
   useEffect(() => {
     const svgImage = document.querySelector('.svg-image');
-    if (svg) {
-      console.log('Image', svgImage) 
-      const animations = svg.getAnimations({ subtree: true });
-      // const animationsParsed = JSON.parse(JSON.stringify(animations));
-      window['aaa'] = animations;
-      console.log('Animations', animations, JSON.parse(JSON.stringify(animations)))
-      const animationsArray = Array.from(animations);
-      setSvgAnimations(animationsArray);
-
+    if (svgImage) {
+      const svgElement = svgImage.contentDocument?.querySelector('svg');
+      if (svgElement) {
+        const animations = getAnimationsFromSVG(svgElement);
+        setSvgAnimations(animations);
+      }
     }
-  }, [svg])
+  }, [svg]);
+  
+  const getAnimationsFromSVG = (svgElement: SVGElement) => {
+    const animations: any[] = [];
+  
+    const processElement = (element: Element) => {
+      const computedStyle = getComputedStyle(element);
+      const animationName = computedStyle.animationName;
+      console.log('Element:', element);
+      console.log('Animation Name:', animationName);
+    
+      if (animationName !== 'none') {
+        const animation: any = {
+          element,
+          animationName,
+          currentTime: 0,
+          finished: null,
+        };
+        animation.finished = new Promise((resolve) => {
+          animation.onfinish = resolve;
+        });
+        animations.push(animation);
+        console.log('Animation:', animation);
+      }
+    
+      const childElements = element.children;
+      for (let i = 0; i < childElements.length; i++) {
+        processElement(childElements[i] as Element);
+      }
+    };
+  
+    processElement(svgElement);
+  
+    return animations;
+  };
 
   const downloadFile = () => {
     // create file in browser
@@ -53,10 +84,8 @@ function App() {
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // if (JsonFile) {
-        const file = e.target.files?.[0];
-        setJsonFile(file || null);
-      // }
+    const file = e.target.files?.[0];
+    setJsonFile(file || null);
   }
 
   const parseSvg = (svgString: any) => {
@@ -77,40 +106,42 @@ function App() {
       reader.onload = (e) => {
         console.log('reader.onload called');
         if (e.target && e.target.result) {
-          // const fileContent = reader.result as string;
           const fileContent = e.target.result as string;
           // Parse SVG file using svg-parser
           const parsedSvg = parseSvg(fileContent);
           
           if (parsedSvg) {
-            // Extract animations from the SVG
-            const svgAnimations: any[] = [];
-            console.log('Parsed SVG:', parsedSvg);
-            traverse(parsedSvg, svgAnimations);
-            console.log('SVG Animations:', svgAnimations);
-      
-            setSvgAnimations(svgAnimations);
+            const svgElement = Array.from(parsedSvg.children).find((child: any) => child.tagName === 'svg');
+            if (svgElement) {
+              // Extract animations from the SVG
+              const svgAnimations: any[] = [];
+              traverse(svgElement, svgAnimations);
+              console.log('SVG Animations:', svgAnimations);
+        
+              setSvgAnimations(svgAnimations);
+            } else {
+              console.log('No <svg> element found in the SVG file');
+            }
           } else {
             console.log('Invalid SVG file');
           }
       
           // Parse JSON data
-          const jsonContent = e.target.result as string;
-          const parsedJsonData = JSON.parse(jsonContent);
+          const parsedJsonData = JSON.parse(fileContent);
           setJsonData(parsedJsonData);
         }
       };
-
+  
       reader.readAsText(JsonFile);
     }
-  }
+  };
 
   const traverse = (node: any, svgAnimations: any[]) => {
     if (node.type === 'element' && (node.tagName === 'animate' || node.tagName === 'animateTransform')) {
       svgAnimations.push(node);
     }
   
-    if (node.children) {
+    if (node.children && node.children.length > 0) {
       node.children.forEach((child: any) => traverse(child, svgAnimations));
     }
   };
@@ -171,7 +202,8 @@ function App() {
       {image && (
         <>
           <textarea
-            value={svgJSON || 'empty'}
+            value={svgAnimations.map((animation, index) => (
+              JSON.stringify(animation))) || 'empty'}
             rows={15}
             cols={50}
             onChange={() => {console.log('onchange was triggered');}}
@@ -219,7 +251,7 @@ function App() {
           </>
         )}
       </section>
-
+{/* 
       {svgAnimations.length > 0 && (
         <section>
           <h3>SVG Animations</h3>
@@ -229,7 +261,7 @@ function App() {
             ))}
           </ul>
         </section>
-      )}
+      )} */}
     </>
   )
 }
