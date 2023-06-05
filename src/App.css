@@ -5,6 +5,12 @@
   text-align: center;
 }
 
+.application-body {
+  padding: 40px;
+  border: 1px solid lightblue;
+  background-color: lightyellow;
+}
+
 .form-area {
   display: flex;
   flex-direction: column;

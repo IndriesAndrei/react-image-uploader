@@ -15,7 +15,7 @@ function App() {
   const [jsonData, setJsonData] = useState<any>(null);
   const [svg, setSVG] = React.useState<SVGSVGElement | null>();
   const [svgAnimations, setSvgAnimations] = useState<any[]>([]);
-  const svgJSON = JSON.stringify(svg?.outerHTML);
+  // const svgJSON = JSON.stringify(svg?.outerHTML);
 
   const MAX_PREVIEW_LENGTH = 200;
 
@@ -30,6 +30,7 @@ function App() {
     }
   }, [svg]);
   
+  // get all animations from the SVG
   const getAnimationsFromSVG = (svgElement: SVGElement) => {
     const animations: any[] = [];
   
@@ -64,6 +65,7 @@ function App() {
     return animations;
   };
 
+  // download extracted animations as JSON file
   const downloadFile = () => {
     // create file in browser
     const fileName = "svg-download-file";
@@ -88,6 +90,7 @@ function App() {
     setJsonFile(file || null);
   }
 
+  // parse the SVG
   const parseSvg = (svgString: any) => {
     if (!svgString) {
       return null;
@@ -98,6 +101,7 @@ function App() {
     return doc.querySelector('svg');
   };
 
+  // traverse all the animations from the SVG
   const traverse = (node: any, svgAnimations: any[]) => {
     if (node.type === 'element' && (node.tagName === 'animate' || node.tagName === 'animateTransform')) {
       svgAnimations.push(node);
@@ -108,6 +112,7 @@ function App() {
     }
   };
 
+  // create new animations for the new SVG
   const createAnimatedSVG = () => {
     if (!svg || !svgAnimations.length) {
       return;
@@ -116,9 +121,9 @@ function App() {
     const newSvg = svg.cloneNode(true) as SVGSVGElement;
   
     svgAnimations.forEach((animation) => {
-      const targetElement = newSvg.querySelector(animation.selector);
+      const targetElement = newSvg.querySelector(animation.element);
       if (targetElement) {
-        const animateElement = document.createElementNS('http://www.w3.org/2000/svg', animation.tagName);
+        const animateElement = document.createElementNS('http://www.w3.org/2000/svg', animation.animationName);
   
         Object.entries(animation.attributes).forEach(([key, value]) => {
           animateElement.setAttribute(key, value);
@@ -131,6 +136,7 @@ function App() {
     objectRef.current?.contentDocument?.querySelector('svg')?.replaceWith(newSvg);
   };
   
+  // upload SVG file
   const handleUpload = () => {
     console.log('handleUpload called');
     if (JsonFile) {
@@ -171,7 +177,7 @@ function App() {
   };
 
    return (
-    <>
+    <div className='application-body'>
       <h1>SVG Demo</h1>
       <br />
       <form className='form-area' onClick={() => inputRef.current?.click()}>
@@ -255,6 +261,7 @@ function App() {
           />
         </span>
       </section>
+      <hr />
       <section className='form-area'>
         <h3>Upload a JSON file</h3>
         <input 
@@ -275,18 +282,7 @@ function App() {
           </>
         )}
       </section>
-{/* 
-      {svgAnimations.length > 0 && (
-        <section>
-          <h3>SVG Animations</h3>
-          <ul>
-            {svgAnimations.map((animation, index) => (
-              <li key={index}>{JSON.stringify(animation)}</li>
-            ))}
-          </ul>
-        </section>
-      )} */}
-    </>
+    </div>
   )
 }
 
