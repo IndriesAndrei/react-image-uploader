@@ -1,5 +1,8 @@
 # react-image-uploader
-ReactJS IMage Uploader App
+ReactJS Image Uploader App
+
+Run npm install
+npm run dev ( to start env)
 
 ReactJs SVG uploader app made with Vite.
 You can Upload/Download SVG files, get the animations out and apply the animations to SVG's
