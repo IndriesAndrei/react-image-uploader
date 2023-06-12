@@ -1,7 +1,9 @@
 # react-image-uploader
 ReactJS Image Uploader App
 
-Run npm install
+To start the application:
+npm install
+
 npm run dev ( to start env)
 
 ReactJs SVG uploader app made with Vite.
